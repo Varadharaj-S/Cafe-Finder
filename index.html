@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewMap — Cafe Finder</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+
+  <!-- ── SPLASH SCREEN ── -->
+  <div id="splash">
+    <div class="splash-logo">Brew<span>Map</span></div>
+    <div class="splash-tagline">☕ Find your perfect cafe</div>
+    <button class="splash-btn" onclick="requestGPS()">📍 Use My Location</button>
+    <div class="splash-or">or search manually</div>
+    <button class="splash-manual" onclick="showManualSearch()">🔍 Search an Area</button>
+  </div>
+
+  <!-- ── MAP ── -->
+  <div id="map"></div>
+
+  <!-- ── TOP BAR ── -->
+  <div id="topbar">
+    <div class="search-wrap">
+      <div class="search-icon">🔍</div>
+      <input id="searchInput" type="text" placeholder="Search cafes or area…" autocomplete="off">
+      <div id="suggestions"></div>
+    </div>
+    <div id="locChip">📍 <span id="locLabel">—</span></div>
+    <button id="themeBtn" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <!-- ── FILTER CHIPS ── -->
+  <div id="filters">
+    <div class="chip active" data-filter="all">All</div>
+    <div class="chip" data-filter="wifi">📶 WiFi</div>
+    <div class="chip" data-filter="study">📚 Study</div>
+    <div class="chip" data-filter="work">💻 Work</div>
+    <div class="chip" data-filter="open">🟢 Open Now</div>
+    <div class="chip" data-filter="budget">💰 Budget</div>
+    <div class="chip" data-filter="date">❤️ Date</div>
+  </div>
+
+  <!-- ── RADIUS SLIDER ── -->
+  <div id="radiusWrap">
+    <label>Radius</label>
+    <input type="range" id="radiusSlider" min="500" max="5000" step="250" value="2000">
+    <div id="radiusVal">2 km</div>
+  </div>
+
+  <!-- ── FLOATING ACTION BUTTONS ── -->
+  <div class="fab-group" id="fabGroup" style="display:none">
+    <div class="fab" title="My Location" onclick="flyToUser()">📍</div>
+    <div class="fab" title="Refresh Cafes" onclick="refreshCafes()">🔄</div>
+    <div class="fab" title="Nearest Cafe" onclick="goNearest()">🎯</div>
+  </div>
+
+  <!-- ── VOICE BUTTON ── -->
+  <button id="voiceBtn" title="Voice Search">🎤</button>
+
+  <!-- ── LOADING OVERLAY ── -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Finding cafes nearby…</div>
+  </div>
+
+  <!-- ── OFFLINE BANNER ── -->
+  <div id="offlineBanner">⚠️ You're offline</div>
+
+  <!-- ── TOAST ── -->
+  <div id="toast"></div>
+
+  <!-- ── CAFE PANEL ── -->
+  <div id="cafePanel">
+    <div class="panel-handle" onclick="togglePanel()"></div>
+    <div class="panel-header">
+      <div class="panel-title">Nearby Cafes ☕</div>
+      <div class="panel-count" id="cafeCount">—</div>
+    </div>
+    <div id="cafeList"></div>
+  </div>
+
+  <!-- ── SAVED VIEW ── -->
+  <div id="savedView">
+    <div class="view-title">❤️ Saved Cafes</div>
+    <div id="savedList"></div>
+  </div>
+
+  <!-- ── SETTINGS VIEW ── -->
+  <div id="settingsView">
+    <div class="view-title">⚙️ Settings</div>
+    <div class="setting-row">
+      <div class="setting-label">🌙 Dark Mode</div>
+      <div class="toggle on" id="darkToggle" onclick="toggleTheme()"></div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">🎤 Voice Search</div>
+      <div class="toggle on" id="voiceToggle" onclick="toggleVoice()"></div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">📳 Haptic Feedback</div>
+      <div class="toggle on"></div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">App Version</div>
+      <div style="color:var(--text2);font-size:14px">2.0 — BrewMap</div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <div id="bottomNav">
+    <div class="nav-item active" data-tab="home" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div>Home
+    </div>
+    <div class="nav-item" data-tab="saved" onclick="switchTab('saved')">
+      <div class="nav-icon">❤️</div>Saved
+    </div>
+    <div class="nav-item" data-tab="map" onclick="switchTab('map')">
+      <div class="nav-icon">🗺️</div>Map
+    </div>
+    <div class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+      <div class="nav-icon">⚙️</div>Settings
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ── -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script src="state.js"></script>
+  <script src="map.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+  <script src="route.js"></script>
+  <script src="main.js"></script>
+
+</body>
+</html>
